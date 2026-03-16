@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -145,6 +145,65 @@ function Button({ children, secondary = false }: { children: React.ReactNode; se
 }
 
 export default function LandingPage() {
+	const [formData, setFormData] = useState({
+  name: "",
+  email: "",
+  phone: "",
+  interestType: "Interesuje mnie demo systemu",
+  message: "",
+});
+
+const [isSubmitting, setIsSubmitting] = useState(false);
+const [submitMessage, setSubmitMessage] = useState("");
+const [submitError, setSubmitError] = useState("");
+
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  setSubmitMessage("");
+  setSubmitError("");
+  setIsSubmitting(true);
+
+  try {
+    const response = await fetch("https://range-saas-demo-production.up.railway.app/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Nie udało się wysłać formularza.");
+    }
+
+    setSubmitMessage("Zgłoszenie zostało wysłane.");
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      interestType: "Interesuje mnie demo systemu",
+      message: "",
+    });
+  } catch (error) {
+    console.error("Błąd wysyłki formularza:", error);
+    setSubmitError("Wystąpił błąd podczas wysyłki formularza.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <div className="min-h-screen bg-[#0b0d0b] text-zinc-100">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.08),_transparent_25%),radial-gradient(circle_at_bottom_right,_rgba(74,222,128,0.06),_transparent_30%)]" />
@@ -392,19 +451,7 @@ export default function LandingPage() {
               <div className="text-2xl font-semibold tracking-tight">Formularz kontaktowy</div>
               <p className="mt-2 text-sm leading-6 text-zinc-500">Zostaw dane, a wrócimy z propozycją prezentacji i doborem planu.</p>
 
-              <div className="mt-6 space-y-4">
-                <input className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500/40" placeholder="Imię i nazwisko" />
-                <input className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500/40" placeholder="E-mail" />
-                <input className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500/40" placeholder="Telefon" />
-                <select className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-amber-500/40">
-                  <option>Interesuje mnie demo systemu</option>
-                  <option>Interesuje mnie plan subskrypcyjny</option>
-                  <option>Interesuje mnie wdrożenie dla wielu obiektów</option>
-                </select>
-                <textarea className="min-h-[140px] w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500/40" placeholder="Napisz kilka słów o swojej strzelnicy i potrzebach" />
-                <button className="w-full rounded-2xl bg-amber-500 px-5 py-3 text-sm font-medium text-zinc-950 transition hover:bg-amber-400">
-                  Wyślij zgłoszenie
-                </button>
+
               </div>
             </div>
           </div>

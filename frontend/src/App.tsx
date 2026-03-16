@@ -15,6 +15,25 @@ type LoginResponse = {
   };
 };
 
+type SuperadminDashboard = {
+  stats: { label: string; value: string; sub?: string }[];
+  organizations: { name: string; plan: string; status: string; admins: number; users: number }[];
+};
+
+type RangeAdminDashboard = {
+  stats: { label: string; value: string; sub?: string }[];
+  reservations: { id: string; user: string; date: string; time: string; status: string; total: string }[];
+  lanes: { name: string; status: string }[];
+  weapons: { id: number; name: string; type: string; available: number; price: number }[];
+};
+
+type UserDashboard = {
+  slots: string[];
+  lanes: { name: string; status: string }[];
+  weapons: { id: number; name: string; type: string; available: number; price: number }[];
+  reservations: { id: string; date: string; time: string; status: string; total: string }[];
+};
+
 const Pill = ({ children, tone = 'slate' }: { children: React.ReactNode; tone?: 'slate' | 'green' | 'amber' | 'red' | 'blue' }) => {
   const tones = {
     slate: 'bg-slate-100 text-slate-700',
@@ -109,6 +128,10 @@ function App() {
       ]
     };
   }, [session]);
+
+  const superadminDashboard = session?.user.role === 'SUPERADMIN' ? (dashboard as SuperadminDashboard) : null;
+  const rangeAdminDashboard = session?.user.role === 'RANGE_ADMIN' ? (dashboard as RangeAdminDashboard) : null;
+  const userDashboard = session?.user.role === 'USER' ? (dashboard as UserDashboard) : null;
 
   const total = useMemo(() => {
     const lanesCost = selectedLanes.length * 80;
@@ -210,13 +233,13 @@ function App() {
         {session.user.role === 'SUPERADMIN' && (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
-              {dashboard.stats.map((stat) => <Stat key={stat.label} {...stat} />)}
+              {superadminDashboard?.stats.map((stat) => <Stat key={stat.label} {...stat} />)}
             </div>
             <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">Strzelnice korzystające z platformy</h2>
                 <div className="mt-4 space-y-3">
-                  {dashboard.organizations.map((org) => (
+                  {superadminDashboard?.organizations.map((org) => (
                     <div key={org.name} className="rounded-3xl border border-slate-200 p-5">
                       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
@@ -249,7 +272,7 @@ function App() {
         {session.user.role === 'RANGE_ADMIN' && (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
-              {dashboard.stats.map((stat) => <Stat key={stat.label} {...stat} />)}
+              
             </div>
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -266,7 +289,7 @@ function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {dashboard.reservations.map((r) => (
+                      {rangeAdminDashboard?.reservations.map((r) => (
                         <tr key={r.id}>
                           <td className="px-4 py-3 font-medium text-slate-900">{r.id}</td>
                           <td className="px-4 py-3 text-slate-600">{r.user}</td>
@@ -283,7 +306,7 @@ function App() {
                 <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                   <h2 className="text-xl font-semibold tracking-tight text-slate-900">Dostępność zasobów</h2>
                   <div className="mt-4 space-y-3">
-                    {dashboard.lanes.map((lane) => (
+                    {rangeAdminDashboard?.lanes.map((lane) => (
                       <div key={lane.name} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                         <div className="font-medium text-slate-900">{lane.name}</div>
                         <Pill tone={lane.status === 'Wolny' ? 'green' : 'red'}>{lane.status}</Pill>
@@ -294,7 +317,7 @@ function App() {
                 <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                   <h2 className="text-xl font-semibold tracking-tight text-slate-900">Magazyn broni</h2>
                   <div className="mt-4 space-y-3">
-                    {dashboard.weapons.map((w) => (
+                    {rangeAdminDashboard?.weapons.map((w) => (
                       <div key={w.id} className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
                         <div>
                           <div className="font-medium text-slate-900">{w.name}</div>
@@ -324,7 +347,7 @@ function App() {
                   <div>
                     <div className="mb-2 text-sm font-medium text-slate-700">Godzina</div>
                     <div className="grid grid-cols-2 gap-2">
-                      {dashboard.slots.map((slot) => (
+                      {userDashboard?.slots.map((slot) => (
                         <button key={slot} onClick={() => setSelectedSlot(slot)} className={`rounded-2xl px-3 py-3 text-sm font-medium transition ${selectedSlot === slot ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
                           {slot}
                         </button>
@@ -336,7 +359,7 @@ function App() {
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">Wybór torów</h2>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {dashboard.lanes.map((lane) => {
+                  {userDashboard?.lanes.map((lane) => {
                     const disabled = lane.status !== 'Wolny';
                     const active = selectedLanes.includes(lane.name);
                     return (
@@ -356,7 +379,7 @@ function App() {
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">Wybór broni</h2>
                 <div className="mt-4 space-y-3">
-                  {dashboard.weapons.map((weapon) => {
+                  {userDashboard?.weapons.map((weapon) => {
                     const current = selectedWeapons.find((w) => w.id === weapon.id)?.qty || 0;
                     return (
                       <div key={weapon.id} className="flex flex-col gap-3 rounded-3xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
@@ -406,7 +429,7 @@ function App() {
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">Moje rezerwacje</h2>
                 <div className="mt-4 space-y-3">
-                  {dashboard.reservations.map((r) => (
+                  {userDashboard?.reservations.map((r) => (
                     <div key={r.id} className="rounded-2xl bg-slate-50 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="font-medium text-slate-900">{r.id}</div>

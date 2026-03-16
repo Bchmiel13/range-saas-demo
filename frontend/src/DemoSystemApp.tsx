@@ -260,9 +260,30 @@ function DemoSystemApp() {
                 <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
                   <h2 className="text-xl font-semibold tracking-tight text-slate-900">Szybkie akcje</h2>
                   <div className="mt-4 grid gap-3">
-                    {['Dodaj nową strzelnicę', 'Utwórz plan subskrypcji', 'Aktywuj konto testowe', 'Zawieś nieopłaconą organizację', 'Zobacz zgłoszenia kontaktowe'].map((x) => (
-                      <button key={x} className="rounded-2xl bg-slate-900 px-4 py-3 text-left font-medium text-white">{x}</button>
-                    ))}
+{[
+  'Dodaj nową strzelnicę',
+  'Utwórz plan subskrypcji',
+  'Aktywuj konto testowe',
+  'Zawieś nieopłaconą organizację',
+  'Zobacz zgłoszenia kontaktowe'
+].map((x) =>
+  x === 'Zobacz zgłoszenia kontaktowe' ? (
+    <Link
+      key={x}
+      to="/admin/contact-requests"
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-left font-medium text-white block"
+    >
+      {x}
+    </Link>
+  ) : (
+    <button
+      key={x}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-left font-medium text-white"
+    >
+      {x}
+    </button>
+  )
+)}
                   </div>
                 </div>
               </div>

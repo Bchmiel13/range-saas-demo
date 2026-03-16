@@ -198,3 +198,83 @@ app.post("/api/contact", async (req, res) => {
 app.listen(port, () => {
   console.log(`Backend działa na porcie ${port}`);
 });
+
+app.get("/api/contact-requests", async (_req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      message: "Brak konfiguracji DATABASE_URL po stronie backendu.",
+    });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        email,
+        phone,
+        interest_type,
+        message,
+        status,
+        created_at
+      FROM contact_requests
+      ORDER BY created_at DESC
+    `);
+
+    return res.json({
+      items: result.rows,
+    });
+  } catch (error) {
+    console.error("Błąd pobierania contact requests:", error);
+    return res.status(500).json({
+      message: "Nie udało się pobrać zgłoszeń.",
+    });
+  }
+});
+
+app.patch("/api/contact-requests/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body as { status?: string };
+
+  const allowedStatuses = ["new", "in_progress", "done", "rejected"];
+
+  if (!status || !allowedStatuses.includes(status)) {
+    return res.status(400).json({
+      message: `Nieprawidłowy status. Dozwolone: ${allowedStatuses.join(", ")}.`,
+    });
+  }
+
+  if (!pool) {
+    return res.status(500).json({
+      message: "Brak konfiguracji DATABASE_URL po stronie backendu.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE contact_requests
+      SET status = $1
+      WHERE id = $2
+      RETURNING id, name, email, phone, interest_type, message, status, created_at
+      `,
+      [status, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "Nie znaleziono zgłoszenia o podanym id.",
+      });
+    }
+
+    return res.json({
+      message: "Status zgłoszenia został zaktualizowany.",
+      item: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Błąd aktualizacji statusu contact request:", error);
+    return res.status(500).json({
+      message: "Nie udało się zaktualizować statusu zgłoszenia.",
+    });
+  }
+});
